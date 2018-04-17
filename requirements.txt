@@ -2,7 +2,6 @@ Flask==0.10.1
 request
 gccinvocation
 setuptools>=18.5
-libcouchbase2-libevent
-libcouchbase-dev
+pycouchbase
 
 
