@@ -1,6 +1,6 @@
 Flask==0.10.1
 request
-gcc7
+gccinvocation
 bottle-couchbase
 pycouchbase
 couchbase
