@@ -49,8 +49,8 @@ class BreweryRowProcessor(RowProcessor):
 CONNSTR = 'couchbase://localhost/beer-sample'
 ENTRIES_PER_PAGE = 30
 
-app = Flask(__name__, static_url_path='')
-app.config.from_object(__name__)
+application = Flask(__name__, static_url_path='')
+application.config.from_object(__name__)
 
 
 def connect_db():
@@ -60,24 +60,24 @@ def connect_db():
 db = connect_db()
 
 
-@app.route('/')
-@app.route('/welcome')
+@application.route('/')
+@application.route('/welcome')
 def welcome():
     return render_template('welcome.html')
 
-@app.route('/beers')
+@application.route('/beers')
 def beers():
     rows = db.query("beer", "by_name", limit=ENTRIES_PER_PAGE,
                     row_processor=BeerRowProcessor(), include_docs=True)
     return render_template('beer/index.html', results=rows)
 
-@app.route('/breweries')
+@application.route('/breweries')
 def breweries():
     rows = db.query("brewery", "by_name", limit=ENTRIES_PER_PAGE,
                     row_processor=BreweryRowProcessor(), include_docs=True)
     return render_template('brewery/index.html', results=rows)
 
-@app.route('/<otype>/delete/<id>')
+@application.route('/<otype>/delete/<id>')
 def delete_object(otype, id):
     try:
         db.remove(id)
@@ -86,7 +86,7 @@ def delete_object(otype, id):
     except NotFoundError:
         return "No such {0} '{1}'".format(otype, id), 404
 
-@app.route('/beers/show/<beer_id>')
+@application.route('/beers/show/<beer_id>')
 def show_beer(beer_id):
     doc = db.get(beer_id, quiet=True)
     if not doc.success:
@@ -96,7 +96,7 @@ def show_beer(beer_id):
         'beer/show.html',
         beer=Beer(id=beer_id, name=doc.value['name'], doc=doc))
 
-@app.route('/breweries/show/<brewery>')
+@application.route('/breweries/show/<brewery>')
 def show_brewery(brewery):
     doc = db.get(brewery, quiet=True)
     if not doc.success:
@@ -106,7 +106,7 @@ def show_brewery(brewery):
 
     return render_template('/brewery/show.html', brewery=obj)
 
-@app.route('/beers/edit/<beer>')
+@application.route('/beers/edit/<beer>')
 def edit_beer_display(beer):
     bdoc = db.get(beer, quiet=True)
     if not bdoc.success:
@@ -117,7 +117,7 @@ def edit_beer_display(beer):
         beer=Beer(id=beer, name=bdoc.value['name'], doc=bdoc),
         is_create=False)
 
-@app.route('/beers/create')
+@application.route('/beers/create')
 def create_beer_display():
     return render_template('beer/edit.html', beer=Beer(name=''), is_create=True)
 
@@ -144,7 +144,7 @@ def normalize_beer_fields(form):
     return doc, None
 
 
-@app.route('/beers/create', methods=['POST'])
+@application.route('/beers/create', methods=['POST'])
 def create_beer_submit():
     doc, err = normalize_beer_fields(request.form)
     if not doc:
@@ -159,7 +159,7 @@ def create_beer_submit():
     except KeyExistsError:
         return "Beer already exists!", 400
 
-@app.route('/beers/edit/<beer>', methods=['POST'])
+@application.route('/beers/edit/<beer>', methods=['POST'])
 def edit_beer_submit(beer):
     doc, err = normalize_beer_fields(request.form)
 
@@ -171,11 +171,11 @@ def edit_beer_submit(beer):
 
 
 def return_search_json(ret):
-    response = app.make_response(json.dumps(ret))
+    response = application.make_response(json.dumps(ret))
     response.headers['Content-Type'] = 'application/json'
     return response
 
-@app.route('/beers/search')
+@application.route('/beers/search')
 def beer_search():
     value = request.args.get('value')
     q = Query()
@@ -194,7 +194,7 @@ def beer_search():
 
     return return_search_json(ret)
 
-@app.route('/breweries/search')
+@application.route('/breweries/search')
 def brewery_search():
     value = request.args.get('value')
     q = Query()
@@ -213,4 +213,4 @@ def brewery_search():
     return return_search_json(ret)
 
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0')
+    application.run(debug=True, host='0.0.0.0')
